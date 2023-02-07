@@ -402,6 +402,28 @@ public class Session implements ISession {
   }
 
   @Override
+  public synchronized void open(
+      boolean enableRPCCompression,
+      int connectionTimeoutInMs,
+      Map<String, TEndPoint> deviceIdToEndpoint)
+      throws IoTDBConnectionException {
+    if (!isClosed) {
+      return;
+    }
+
+    this.enableRPCCompression = enableRPCCompression;
+    this.connectionTimeoutInMs = connectionTimeoutInMs;
+    defaultSessionConnection = constructSessionConnection(this, defaultEndPoint, zoneId);
+    defaultSessionConnection.setEnableRedirect(enableQueryRedirection);
+    isClosed = false;
+    if (enableRedirection || enableQueryRedirection) {
+      this.deviceIdToEndpoint = deviceIdToEndpoint;
+      endPointToSessionConnection = new ConcurrentHashMap<>();
+      endPointToSessionConnection.put(defaultEndPoint, defaultSessionConnection);
+    }
+  }
+
+  @Override
   public synchronized void close() throws IoTDBConnectionException {
     if (isClosed) {
       return;
@@ -949,6 +971,10 @@ public class Session implements ISession {
         return;
       }
       AtomicReference<IoTDBConnectionException> exceptionReference = new AtomicReference<>();
+      if (deviceIdToEndpoint.containsKey(deviceId)
+          && deviceIdToEndpoint.get(deviceId).equals(endpoint)) {
+        return;
+      }
       deviceIdToEndpoint.put(deviceId, endpoint);
       SessionConnection connection =
           endPointToSessionConnection.computeIfAbsent(
@@ -3197,7 +3223,7 @@ public class Session implements ISession {
    * @param insertConsumer insert function
    * @param <T>
    *     <ul>
-   *       <li>{@link TSInsertRecordsReq}
+ B  *       <li>{@link TSInsertRecordsReq}
    *       <li>{@link TSInsertStringRecordsReq}
    *       <li>{@link TSInsertTabletsReq}
    *     </ul>
@@ -3243,6 +3269,7 @@ public class Session implements ISession {
         completableFuture.join();
       } catch (CompletionException completionException) {
         Throwable cause = completionException.getCause();
+        logger.error("Some error here!", cause);
         if (cause instanceof IoTDBConnectionException) {
           throw (IoTDBConnectionException) cause;
         } else {
