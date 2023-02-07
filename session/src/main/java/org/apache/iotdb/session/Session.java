@@ -926,7 +926,8 @@ public class Session implements ISession {
     TEndPoint endPoint;
     if (enableRedirection
         && !deviceIdToEndpoint.isEmpty()
-        && (endPoint = deviceIdToEndpoint.get(deviceId)) != null) {
+        && (endPoint = deviceIdToEndpoint.get(deviceId)) != null
+        && endPointToSessionConnection.containsKey(endPoint)) {
       return endPointToSessionConnection.get(endPoint);
     } else {
       return defaultSessionConnection;
@@ -971,11 +972,10 @@ public class Session implements ISession {
         return;
       }
       AtomicReference<IoTDBConnectionException> exceptionReference = new AtomicReference<>();
-      if (deviceIdToEndpoint.containsKey(deviceId)
-          && deviceIdToEndpoint.get(deviceId).equals(endpoint)) {
-        return;
+      if (!deviceIdToEndpoint.containsKey(deviceId)
+          || !deviceIdToEndpoint.get(deviceId).equals(endpoint)) {
+        deviceIdToEndpoint.put(deviceId, endpoint);
       }
-      deviceIdToEndpoint.put(deviceId, endpoint);
       SessionConnection connection =
           endPointToSessionConnection.computeIfAbsent(
               endpoint,
@@ -3223,7 +3223,8 @@ public class Session implements ISession {
    * @param insertConsumer insert function
    * @param <T>
    *     <ul>
- B  *       <li>{@link TSInsertRecordsReq}
+   *       B *
+   *       <li>{@link TSInsertRecordsReq}
    *       <li>{@link TSInsertStringRecordsReq}
    *       <li>{@link TSInsertTabletsReq}
    *     </ul>
