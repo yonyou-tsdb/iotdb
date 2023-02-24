@@ -14305,7 +14305,7 @@
               }
             ]
           },
-          "unit": "ms"
+          "unit": "none"
         },
         "overrides": []
       },
@@ -14318,7 +14318,9 @@
       "id": 185,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "last"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true
@@ -14334,14 +14336,16 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "rate(disk_io_time{instance=~\"$instance\"}[1m])",
+          "expr": "rate(disk_io_ops{instance=~\"$instance\"}[1m]) * disk_io_avg_time{instance=~\"$instance\"} / 1000",
           "interval": "",
           "legendFormat": "{{name}}-{{type}}",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "Disk I/O Time",
+      "title": "Disk I/O Parallel Rate",
       "type": "timeseries"
     },
     {
@@ -14673,7 +14677,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -14765,7 +14770,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -14811,7 +14817,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": false,
+  "refresh": "15s",
   "schemaVersion": 37,
   "style": "dark",
   "tags": [
@@ -14884,6 +14890,6 @@
   "timezone": "browser",
   "title": "Apache IoTDB DataNode Dashboard",
   "uid": "TbEVYRw7A",
-  "version": 3,
+  "version": 2,
   "weekStart": ""
 }
